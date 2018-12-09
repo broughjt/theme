@@ -1,0 +1,13 @@
+setup.py
+/home/jackson/projects/personal/theme/theme.egg-info/PKG-INFO
+/home/jackson/projects/personal/theme/theme.egg-info/SOURCES.txt
+/home/jackson/projects/personal/theme/theme.egg-info/dependency_links.txt
+/home/jackson/projects/personal/theme/theme.egg-info/entry_points.txt
+/home/jackson/projects/personal/theme/theme.egg-info/requires.txt
+/home/jackson/projects/personal/theme/theme.egg-info/top_level.txt
+theme.egg-info/PKG-INFO
+theme.egg-info/SOURCES.txt
+theme.egg-info/dependency_links.txt
+theme.egg-info/entry_points.txt
+theme.egg-info/requires.txt
+theme.egg-info/top_level.txt
