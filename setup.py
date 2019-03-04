@@ -6,6 +6,10 @@ setup(
     py_modules=['theme'],
     install_requires=[
         'Click',
+        'appdirs',
+        'inquirer',
+        'PyYAML',
+        'pystache',
     ],
     entry_points={
         'console_scripts': [

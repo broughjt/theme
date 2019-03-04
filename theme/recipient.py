@@ -1,6 +1,5 @@
 import re
 import click
-from theme.template import Template
 
 NEEDLE = re.compile(r"^.*%%theme_template%%$")
 END = re.compile(r"^.*%%theme_template_end%%$")
@@ -23,13 +22,15 @@ class Recipient:
             else:
                 if END.match(line):
                     end = count
-
-        self.content = "\n".join(lines[:start] + scheme.splitlines() + lines[end:])
+        try:
+            self.content = "\n".join(lines[:start] + scheme.splitlines() + lines[end:])
+        except UnboundLocalError:
+            print("Error: Invalid recipient file")
 
     def read(self):
-        with click.open_file(self.path, 'r') as file_:
+        with click.open_file(self.path, "r") as file_:
             return file_.read()
 
     def write(self):
-        with click.open_file(self.path, 'w') as file_:
+        with click.open_file(self.path, "w") as file_:
             file_.write(self.content)

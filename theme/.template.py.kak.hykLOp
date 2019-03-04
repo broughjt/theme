@@ -12,8 +12,8 @@ class Template:
     def get(self):
         """Return a mustache tempate from the file specified in self.path."""
         with click.open_file(self.path, "r") as file_:
-            template_dict = file_.read()
-        return template_dict
+            template = file_.read()
+        return template
 
     def build(self, scheme_dict, scheme_file):
         """Scheme should be a dict containing the loaded yaml scheme info."""

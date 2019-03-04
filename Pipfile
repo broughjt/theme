@@ -10,6 +10,8 @@ click = "*"
 theme = {editable = true,path = "."}
 pyyaml = "*"
 pystache = "*"
+appdirs = "*"
+inquirer = "*"
 
 [requires]
 python_version = "3.6"

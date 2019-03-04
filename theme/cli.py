@@ -1,56 +1,110 @@
+import appdirs
 import click
-import glob
-import sys
+import os
 from pathlib import Path
-from theme.utils import get_yaml_dict
+from theme.grid import Grid
+from theme.utils import (
+    get_yaml_dict, matching, narrow, error, debug, check_path, help_
+)
 from theme.recipient import Recipient
 from theme.template import Template
 
+CONFIG = Path(appdirs.user_config_dir("theme", "broughjt"))
+DATA = Path(appdirs.user_data_dir("theme", "broughjt"))
+COLUMNS = click.get_terminal_size()[0]
+
+
+def get_schemes_dict():
+    schemes = {}
+    for scheme in DATA.glob("schemes/*/*.y*ml"):
+        schemes[scheme.stem] = str(scheme)
+    return schemes
+
+
+def get_schemes_name():
+    schemes = []
+    for scheme in DATA.glob("schemes/*/*.y*ml"):
+        schemes.append(scheme.stem)
+    return sorted(schemes, key=str.lower)
+
+
+def ensure_dirs():
+    if not CONFIG.exists():
+        debug("config doesn't exist")
+        CONFIG.mkdir()
+    if not CONFIG.is_dir():
+        debug("config isn't a dir")
+        CONFIG.replace(CONFIG)
+    if not DATA.exists():
+        error("please call theme update")
+
+
+def get_config():
+    return get_yaml_dict(CONFIG / "config")
+
+
+def check_config(config):
+    for value in config.values():
+        if isinstance(value, (list, dict)):
+            return False
+    return True
+
 
 @click.group()
-def cli():
-    pass
+@click.pass_context
+@click.option('--debug/--no-debug', default=False)
+def cli(ctx, debug):
+    ensure_dirs()
+    ctx.ensure_object(dict)
+    ctx.obj['DEBUG'] = debug
 
 
-@cli.command()
-@click.argument('theme')
-def set(theme):
+@cli.command("set")
+@click.pass_context
+@click.argument("theme")
+def set_(ctx, theme):
     """Set a theme."""
-    config = get_yaml_dict('/home/jackson/.config/theme/config.yml')
-    base_dir = Path('/home/jackson/colors')
-    schemes = [scheme.name.replace(scheme.suffix, '') for scheme in base_dir.glob('schemes/*/*.y*ml')]
-    scheme = []
+    schemes = get_schemes_dict()
+    matches = matching(theme, schemes)
+    if len(matches) > 30:
+        help_('Consider setting THEME to something more specific')
+        error('There were more than 30 matches')
+    match = narrow(matches, theme)
 
-    for i in schemes:
-        if theme in i:
-            scheme.append(i)
+    config = get_config()
+    if not check_config(config):
+        error('Invalid config file')
 
-    if len(scheme) > 1:
-        print('Which one?')
-        for i, poop in enumerate(scheme):
-            print(f'  {i} {poop}')
-        scheme = scheme[int(input(f'{[x for x in range(len(scheme))]}: '))]
-    elif len(scheme) == 1:
-        scheme = schemes[0]
-    else:
-        print('error: theme not found.')
-        sys.exit(1)
+    scheme_path = schemes[match]
+    scheme_dict = get_yaml_dict(scheme_path)
+    for key, value in config.items():
+        recipient_path = os.path.expanduser(value)
+        template_group = get_yaml_dict(
+            DATA.joinpath(f'templates/{key}/templates/config.yaml')
+        )
+        possible_templates = [template for template in template_group]
+        template_path = DATA.joinpath(
+            f'templates/{key}/templates',
+            narrow(possible_templates, 'default') + '.mustache'
+        )
+        if check_path(recipient_path):
+            recipient = Recipient(recipient_path)
+            built = Template(template_path).build(scheme_dict, scheme_path)
+            recipient.inject(built)
+            recipient.write()
+        else:
+            error('Invalid recipient file')
 
-    # scheme_dict = get_yaml_dict(scheme)
 
-    # for k, v in config.items():
-    #     print(f'setting {k} to {theme} in {v}')
-    #     recipient = Recipient(v)
-    #     template = Template(f'/home/jackson/colors/templates/{k}/templates/default.mustache')
-    #     built = template.build(scheme_dict)
-    #     recipient.inject(built)
-    #     recipient.write()
-
-
-@cli.command()
-def list():
+@cli.command("list")
+@click.option("-1", "--oneline", is_flag=True, help="display one entry per line")
+def list_(oneline):
     """Lists all themes."""
-    schemes = Path('/home/jackson/colors/schemes')
-    for i in schemes.iterdir():
-        if i.is_dir():
-            print(i)
+    schemes = get_schemes_name()
+
+    if oneline:
+        for scheme in schemes:
+            print(scheme)
+    else:
+        grid = Grid(schemes).fit_to(COLUMNS)
+        print(grid)

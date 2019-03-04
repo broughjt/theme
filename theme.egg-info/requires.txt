@@ -1,1 +1,5 @@
 Click
+appdirs
+inquirer
+PyYAML
+pystache
