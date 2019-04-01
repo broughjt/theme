@@ -18,6 +18,8 @@ class Template:
     def build(self, scheme_dict, scheme_file):
         """Scheme should be a dict containing the loaded yaml scheme info."""
         bases = scheme_dict.copy()
+
+        print(bases)
         built = {
             "scheme-name": bases.pop("scheme"),
             "scheme-author": bases.pop("author"),
@@ -35,6 +37,8 @@ class Template:
                     elif kind == "dec":
                         number = int(number, 16) / 255
                     built[f"{key}-{kind}-{color}"] = str(number)
+
+        print(built)
 
         return pystache.render(self.get(), built)
 
